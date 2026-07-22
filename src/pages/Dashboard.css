@@ -1,0 +1,321 @@
+/* ============================================
+   Dashboard — Painel do organizador (/painel)
+   ============================================ */
+
+.dash-page {
+  padding: 48px 0 80px;
+}
+
+.dash-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+
+.dash-header p {
+  margin-top: 6px;
+  font-size: 0.95rem;
+}
+
+/* ---------- métricas ---------- */
+
+.dash-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.dash-metric {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 22px;
+}
+
+.dash-metric-icon {
+  font-size: 1.6rem;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: var(--gradient-soft);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  flex-shrink: 0;
+}
+
+.dash-metric-value {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.dash-metric-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* ---------- tabela de eventos ---------- */
+
+.dash-table-head {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr 1.4fr 1fr 0.8fr;
+  gap: 20px;
+  padding: 0 22px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+
+.dash-row {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr 1.4fr 1fr 0.8fr;
+  gap: 20px;
+  align-items: center;
+  padding: 16px 22px;
+  margin-bottom: 12px;
+  border-radius: var(--radius);
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.dash-row:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.dash-cell {
+  min-width: 0;
+}
+
+.dash-cell-label {
+  display: none;
+}
+
+.dash-cell-event {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.dash-cover {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+}
+
+.dash-cover .event-cover-emoji {
+  font-size: 1.5rem;
+}
+
+.dash-event-info {
+  min-width: 0;
+}
+
+.dash-event-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-event-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.dash-cell-date {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* ---------- vendas + barra ---------- */
+
+.dash-sales-count {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.dash-sales-pct {
+  font-style: normal;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.dash-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.dash-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.dash-bar-fill--low {
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+}
+
+.dash-bar-fill--mid {
+  background: linear-gradient(90deg, #d97706, #f59e0b);
+}
+
+.dash-bar-fill--high {
+  background: linear-gradient(90deg, #dc2626, #ef4444);
+}
+
+/* ---------- receita + ação ---------- */
+
+.dash-cell-revenue strong {
+  font-family: var(--font-display);
+  font-size: 0.98rem;
+}
+
+.dash-cell-action {
+  text-align: right;
+}
+
+.dash-view-link {
+  padding: 9px 18px;
+  font-size: 0.85rem;
+}
+
+/* ---------- estado vazio ---------- */
+
+.dash-empty {
+  text-align: center;
+  padding: 72px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.dash-empty-emoji {
+  font-size: 3rem;
+}
+
+.dash-empty h2 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.dash-empty p {
+  max-width: 420px;
+}
+
+.dash-empty .btn {
+  margin-top: 10px;
+}
+
+/* ---------- responsivo: tabela vira cards ---------- */
+
+@media (max-width: 900px) {
+  .dash-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dash-table-head {
+    display: none;
+  }
+
+  .dash-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    padding: 20px;
+  }
+
+  .dash-cell-event {
+    grid-column: 1 / -1;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dash-cell-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-faint);
+    margin-bottom: 5px;
+  }
+
+  .dash-cell-sales {
+    grid-column: 1 / -1;
+  }
+
+  .dash-cell-action {
+    text-align: right;
+    align-self: end;
+  }
+}
+
+@media (max-width: 560px) {
+  .dash-page {
+    padding: 32px 0 64px;
+  }
+
+  .dash-metrics {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .dash-metric {
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .dash-metric-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+
+  .dash-metric-value {
+    font-size: 1.1rem;
+  }
+
+  .dash-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-cell-action {
+    text-align: stretch;
+  }
+
+  .dash-view-link {
+    width: 100%;
+  }
+}

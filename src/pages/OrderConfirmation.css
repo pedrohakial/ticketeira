@@ -1,0 +1,305 @@
+/* ============================================
+   Ticketeira — Confirmação de pedido
+   Página comemorativa pós-compra
+   ============================================ */
+
+.confirmation {
+  padding-top: 56px;
+  padding-bottom: 96px;
+  max-width: 720px;
+}
+
+/* ---------- herói comemorativo ---------- */
+
+.confirmation-hero {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.confirmation-icon {
+  font-size: 4.5rem;
+  line-height: 1;
+  display: inline-block;
+  animation: confirmation-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    confirmation-pulse 2.2s ease-in-out 0.6s infinite;
+  filter: drop-shadow(0 0 24px rgba(34, 197, 94, 0.45));
+}
+
+@keyframes confirmation-pop {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes confirmation-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+.confirmation-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-top: 16px;
+}
+
+.confirmation-order-id {
+  margin-top: 10px;
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.confirmation-order-id strong {
+  color: var(--text);
+  font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace;
+  background: var(--gradient-soft);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  border-radius: 8px;
+  padding: 3px 10px;
+  margin-left: 4px;
+}
+
+.confirmation-sub {
+  margin-top: 12px;
+  font-size: 1.05rem;
+}
+
+/* ---------- resumo do pedido ---------- */
+
+.confirmation-summary {
+  padding: 28px;
+  margin-bottom: 40px;
+}
+
+.confirmation-section-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.confirmation-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.confirmation-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.confirmation-row:last-child {
+  border-bottom: none;
+}
+
+.confirmation-row dt {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  flex-shrink: 0;
+}
+
+.confirmation-row dd {
+  text-align: right;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.confirmation-row-total {
+  padding-top: 16px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border-strong);
+}
+
+.confirmation-row-total dt {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.confirmation-row-total dd {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--success);
+}
+
+/* ---------- ingressos ---------- */
+
+.confirmation-tickets {
+  margin-bottom: 44px;
+}
+
+.confirmation-tickets-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ticket {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  background: var(--surface-2);
+  border: 1.5px dashed rgba(139, 92, 246, 0.5);
+  border-radius: var(--radius);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ticket:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+/* furos laterais do ingresso */
+.ticket::before,
+.ticket::after {
+  content: '';
+  position: absolute;
+  left: 110px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1.5px dashed rgba(139, 92, 246, 0.5);
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+.ticket::before {
+  top: -12px;
+}
+
+.ticket::after {
+  bottom: -12px;
+}
+
+.ticket-stub {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 10px;
+  background: var(--gradient);
+  color: #fff;
+}
+
+.ticket-stub-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.ticket-stub-num {
+  font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.ticket-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px 24px;
+  min-width: 0;
+}
+
+.ticket-event {
+  font-weight: 700;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ticket-tier {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.ticket-code {
+  font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent-3);
+  margin-top: 8px;
+  word-break: break-all;
+}
+
+.ticket-hint {
+  color: var(--text-faint);
+  font-size: 0.75rem;
+}
+
+.confirmation-email-note {
+  margin-top: 20px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.confirmation-email-note strong {
+  color: var(--text);
+}
+
+/* ---------- ações ---------- */
+
+.confirmation-actions {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* ---------- responsivo ---------- */
+
+@media (max-width: 560px) {
+  .confirmation {
+    padding-top: 40px;
+  }
+
+  .confirmation-summary {
+    padding: 22px 18px;
+  }
+
+  .ticket {
+    grid-template-columns: 64px 1fr;
+  }
+
+  .ticket::before,
+  .ticket::after {
+    left: 64px;
+  }
+
+  .ticket-stub-label {
+    writing-mode: horizontal-tb;
+    transform: none;
+    font-size: 0.6rem;
+  }
+
+  .ticket-body {
+    padding: 16px 18px;
+  }
+
+  .confirmation-actions .btn {
+    width: 100%;
+  }
+}

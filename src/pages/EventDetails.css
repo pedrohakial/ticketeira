@@ -1,0 +1,320 @@
+/* ============================================
+   EventDetails — página de detalhes do evento
+   ============================================ */
+
+.ed-page {
+  padding-bottom: 72px;
+}
+
+/* ---------- estado: não encontrado ---------- */
+
+.ed-not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 96px 24px;
+}
+
+.ed-not-found-emoji {
+  font-size: 3.5rem;
+}
+
+/* ---------- hero ---------- */
+
+.ed-hero {
+  position: relative;
+  margin-bottom: 40px;
+}
+
+.ed-hero .ed-hero-cover {
+  height: clamp(220px, 34vw, 380px);
+  border-radius: 0;
+}
+
+.ed-hero .ed-hero-cover .event-cover-emoji {
+  font-size: clamp(4.5rem, 10vw, 7rem);
+}
+
+.ed-hero-content {
+  position: relative;
+  margin-top: -72px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  z-index: 2;
+}
+
+.ed-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+}
+
+.ed-rating {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+/* ---------- grid ---------- */
+
+.ed-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .ed-grid {
+    grid-template-columns: 1.4fr 1fr;
+  }
+
+  .ed-tickets {
+    position: sticky;
+    top: 92px;
+  }
+}
+
+.ed-section-heading {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+/* ---------- informações ---------- */
+
+.ed-description {
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 26px;
+}
+
+.ed-facts {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 22px;
+}
+
+.ed-fact {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.ed-fact + .ed-fact {
+  border-top: 1px solid var(--border);
+}
+
+.ed-fact-icon {
+  font-size: 1.35rem;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-soft);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: var(--radius-sm);
+}
+
+.ed-fact div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ed-fact strong {
+  font-size: 0.95rem;
+}
+
+.ed-fact .muted {
+  font-size: 0.88rem;
+}
+
+/* ---------- card de ingressos ---------- */
+
+.ed-tickets {
+  padding: 24px;
+}
+
+.ed-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.ed-tier {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  padding: 14px 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ed-tier-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+}
+
+.ed-tier-soldout {
+  opacity: 0.55;
+}
+
+.ed-tier-main {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: none;
+  border: none;
+  color: var(--text);
+  text-align: left;
+  padding: 0;
+}
+
+.ed-tier-main:disabled {
+  cursor: not-allowed;
+}
+
+.ed-tier-radio {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ed-tier-selected .ed-tier-radio {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 4px var(--bg-soft), inset 0 0 0 10px var(--accent);
+}
+
+.ed-tier-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ed-tier-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.ed-tier-price {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.ed-tier-remaining {
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.ed-tier-soldout-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.ed-tier-bar {
+  margin-top: 12px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.ed-tier-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--gradient);
+}
+
+/* ---------- quantidade ---------- */
+
+.ed-qty {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.88rem;
+}
+
+.ed-qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ed-qty-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.ed-qty-btn:hover:not(:disabled) {
+  background: var(--gradient-soft);
+  border-color: var(--accent);
+}
+
+.ed-qty-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ed-qty-value {
+  min-width: 22px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+/* ---------- resumo ---------- */
+
+.ed-summary {
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ed-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.95rem;
+}
+
+.ed-summary-row strong {
+  font-size: 1.25rem;
+}
