@@ -2,7 +2,21 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getEvents } from '../data/store';
 import EventCard from '../components/EventCard';
+import { useReveal } from '../hooks/useReveal';
 import './Home.css';
+
+const MARQUEE_ITEMS = [
+  '🎸 Rock',
+  '🎧 Eletrônica',
+  '🎤 Sertanejo',
+  '🪩 Pop',
+  '🥁 Funk',
+  '🎷 Jazz',
+  '🎹 MPB',
+  '🎶 Forró',
+  '🔊 Reggae',
+  '🎻 Clássica',
+];
 
 export default function Home() {
   const [search, setSearch] = useState('');
@@ -10,6 +24,11 @@ export default function Home() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const statsRef = useReveal();
+  const featuredRef = useReveal();
+  const gridRef = useReveal();
+  const ctaRef = useReveal();
 
   useEffect(() => {
     let active = true;
@@ -29,6 +48,18 @@ export default function Home() {
 
   const featured = useMemo(() => events.filter((e) => e.featured), [events]);
 
+  const stats = useMemo(() => {
+    const sold = events.reduce(
+      (acc, e) => acc + e.tiers.reduce((a, t) => a + t.sold, 0),
+      0,
+    );
+    return {
+      events: events.length,
+      sold,
+      cities: new Set(events.map((e) => e.city)).size,
+    };
+  }, [events]);
+
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return events.filter((e) => {
@@ -45,19 +76,30 @@ export default function Home() {
   return (
     <div className="home">
       {/* ---------- hero ---------- */}
-      <section className="home-hero fade-up">
-        <div className="container home-hero-inner">
+      <section className="home-hero">
+        <div className="home-hero-bg" aria-hidden="true">
+          <span className="home-blob home-blob-1" />
+          <span className="home-blob home-blob-2" />
+          <span className="home-blob home-blob-3" />
+          <span className="home-hero-beams" />
+        </div>
+
+        <div className="container home-hero-inner fade-up">
           <span className="badge">🎫 Ingressos sem complicação</span>
           <h1 className="home-hero-title">
-            Seu próximo show <span className="text-gradient">começa aqui</span>
+            Sinta o show.
+            <br />
+            <span className="text-gradient home-hero-gradient">Viva a noite.</span>
           </h1>
           <p className="home-hero-sub">
             Descubra shows, festivais e experiências ao vivo perto de você. Compre em
-            segundos ou crie o seu próprio evento.
+            segundos ou coloque o seu próprio evento no palco.
           </p>
 
-          <div className="home-search">
-            <span className="home-search-icon">🔎</span>
+          <div className="home-search glass">
+            <span className="home-search-icon" aria-hidden="true">
+              🔎
+            </span>
             <input
               type="search"
               className="home-search-input"
@@ -69,15 +111,26 @@ export default function Home() {
           </div>
 
           <div className="home-hero-actions">
-            <Link to="/criar" className="btn btn-primary btn-lg">
+            <a href="#eventos" className="btn btn-primary btn-lg">
+              🎟️ Explorar eventos
+            </a>
+            <Link to="/criar" className="btn btn-ghost btn-lg">
               🎤 Criar evento
             </Link>
-            <a href="#eventos" className="btn btn-ghost btn-lg">
-              Explorar eventos
-            </a>
           </div>
         </div>
       </section>
+
+      {/* ---------- marquee ---------- */}
+      <div className="home-marquee" aria-hidden="true">
+        <div className="home-marquee-track">
+          {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
+            <span key={i} className="home-marquee-item">
+              {item} <span className="home-marquee-dot">•</span>
+            </span>
+          ))}
+        </div>
+      </div>
 
       {loading ? (
         <div className="container page-state">
@@ -98,79 +151,126 @@ export default function Home() {
         </div>
       ) : (
         <>
-          {/* ---------- filtros ---------- */}
-      <section className="container fade-up" id="eventos">
-        <div className="home-pills" role="group" aria-label="Filtrar por categoria">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              className={`home-pill${category === cat ? ' active' : ''}`}
-              onClick={() => setCategory(cat)}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </section>
+          {/* ---------- stats ---------- */}
+          <section className="container home-stats reveal" ref={statsRef}>
+            <div className="home-stat">
+              <span className="home-stat-number text-gradient">{stats.events}</span>
+              <span className="home-stat-label">eventos no palco</span>
+            </div>
+            <div className="home-stat">
+              <span className="home-stat-number text-gradient">
+                {stats.sold.toLocaleString('pt-BR')}
+              </span>
+              <span className="home-stat-label">ingressos vendidos</span>
+            </div>
+            <div className="home-stat">
+              <span className="home-stat-number text-gradient">{stats.cities}</span>
+              <span className="home-stat-label">cidades vibrando</span>
+            </div>
+          </section>
 
-      {/* ---------- destaques ---------- */}
-      {featured.length > 0 && category === 'Todas' && !search.trim() && (
-        <section className="container home-featured fade-up">
-          <h2 className="section-title">Em destaque ✨</h2>
-          <div className="home-featured-row">
-            {featured.map((event) => (
-              <div key={event.id} className="home-featured-item">
-                <EventCard event={event} />
+          {/* ---------- destaques ---------- */}
+          {featured.length > 0 && category === 'Todas' && !search.trim() && (
+            <section className="container home-featured reveal" ref={featuredRef}>
+              <h2 className="section-title">Em destaque ✨</h2>
+              <div className="home-featured-grid">
+                {featured.map((event, i) => (
+                  <div
+                    key={event.id}
+                    className={`home-featured-item${i === 0 ? ' home-featured-item-lead' : ''}`}
+                  >
+                    <EventCard event={event} />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </section>
-      )}
+            </section>
+          )}
 
-      {/* ---------- grid ---------- */}
-      <section className="container home-grid-section fade-up">
-        <h2 className="section-title">
-          {category === 'Todas' ? 'Todos os eventos' : category}{' '}
-          <span className="home-count">{filtered.length}</span>
-        </h2>
+          {/* ---------- grid ---------- */}
+          <section className="container home-grid-section reveal" ref={gridRef} id="eventos">
+            <h2 className="section-title">
+              {category === 'Todas' ? 'Todos os eventos' : category}{' '}
+              <span className="home-count">{filtered.length}</span>
+            </h2>
 
-        {filtered.length > 0 ? (
-          <div className="home-grid">
-            {filtered.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
-        ) : (
-          <div className="home-empty card">
-            <span className="home-empty-emoji">🫠</span>
-            <h3>Nada por aqui...</h3>
-            <p className="muted">
-              Não encontramos eventos para essa busca. Tente outro termo ou categoria.
-            </p>
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={() => {
-                setSearch('');
-                setCategory('Todas');
-              }}
-            >
-              Limpar filtros
-            </button>
-          </div>
-        )}
-      </section>
+            <div className="home-pills" role="group" aria-label="Filtrar por categoria">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  className={`home-pill${category === cat ? ' active' : ''}`}
+                  onClick={() => setCategory(cat)}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {filtered.length > 0 ? (
+              <div className="home-grid">
+                {filtered.map((event) => (
+                  <EventCard key={event.id} event={event} />
+                ))}
+              </div>
+            ) : (
+              <div className="home-empty card">
+                <span className="home-empty-emoji">🫠</span>
+                <h3>Nada por aqui...</h3>
+                <p className="muted">
+                  Não encontramos eventos para essa busca. Tente outro termo ou categoria.
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => {
+                    setSearch('');
+                    setCategory('Todas');
+                  }}
+                >
+                  Limpar filtros
+                </button>
+              </div>
+            )}
+          </section>
         </>
       )}
+
+      {/* ---------- CTA final ---------- */}
+      <section className="container home-cta reveal" ref={ctaRef}>
+        <div className="home-cta-panel glass">
+          <span className="home-cta-emoji" aria-hidden="true">
+            🎤
+          </span>
+          <h2 className="home-cta-title">
+            Tem um show? <span className="text-gradient">Venda com a Ticketeira.</span>
+          </h2>
+          <p className="muted">
+            Crie seu evento em minutos, venda ingressos online e receba via Mercado Pago.
+            Sem burocracia, só palco.
+          </p>
+          <Link to="/criar" className="btn btn-primary btn-lg">
+            🚀 Criar meu evento
+          </Link>
+        </div>
+      </section>
 
       {/* ---------- footer ---------- */}
       <footer className="home-footer">
         <div className="container home-footer-inner">
-          <span className="home-footer-logo">
-            🎫 <strong>Ticketeira</strong>
+          <div className="home-footer-brand">
+            <span className="home-footer-logo">
+              🎫 <strong>Ticketeira</strong>
+            </span>
+            <span className="muted">Feito para quem vive de música ao vivo.</span>
+          </div>
+          <nav className="home-footer-links" aria-label="Links do rodapé">
+            <a href="#eventos">Explorar eventos</a>
+            <Link to="/criar">Criar evento</Link>
+            <Link to="/meus-ingressos">Meus ingressos</Link>
+          </nav>
+          <span className="home-footer-tech muted">
+            Feito com React + Supabase + Mercado Pago
           </span>
-          <span className="muted">Feito para quem vive de música ao vivo.</span>
         </div>
       </footer>
     </div>

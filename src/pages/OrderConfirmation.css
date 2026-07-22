@@ -1,28 +1,107 @@
 /* ============================================
    Ticketeira — Confirmação de pedido
-   Página comemorativa pós-compra
+   Momento de celebração pós-compra
    ============================================ */
 
 .confirmation {
-  padding-top: 56px;
+  padding-top: 64px;
   padding-bottom: 96px;
-  max-width: 720px;
+  max-width: 760px;
+}
+
+/* ---------- confetes ---------- */
+
+.confirmation-confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.confirmation-confetti span {
+  position: absolute;
+  top: -16px;
+  display: block;
+  opacity: 0;
+  animation-name: confirmation-confetti-fall;
+  animation-timing-function: cubic-bezier(0.25, 0.4, 0.55, 1);
+  animation-fill-mode: forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes confirmation-confetti-fall {
+  0% {
+    transform: translate3d(0, -5vh, 0) rotate(0deg);
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--confetti-drift, 0), 108vh, 0) rotate(720deg);
+    opacity: 0;
+  }
 }
 
 /* ---------- herói comemorativo ---------- */
 
 .confirmation-hero {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 44px;
+}
+
+.confirmation-icon-wrap {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+
+/* anéis de glow pulsantes ao redor do ícone */
+.confirmation-icon-wrap::before,
+.confirmation-icon-wrap::after {
+  content: '';
+  position: absolute;
+  inset: -16px;
+  border-radius: 50%;
+  border: 2px solid rgba(52, 211, 153, 0.55);
+  animation: confirmation-ring 2.4s ease-out infinite;
+  pointer-events: none;
+}
+
+.confirmation-icon-wrap::after {
+  animation-delay: 1.2s;
+}
+
+.confirmation-icon-wrap--fail::before,
+.confirmation-icon-wrap--fail::after {
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+@keyframes confirmation-ring {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
 }
 
 .confirmation-icon {
-  font-size: 4.5rem;
+  font-size: clamp(4rem, 12vw, 5.5rem);
   line-height: 1;
   display: inline-block;
-  animation: confirmation-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both,
-    confirmation-pulse 2.2s ease-in-out 0.6s infinite;
-  filter: drop-shadow(0 0 24px rgba(34, 197, 94, 0.45));
+  animation: confirmation-pop 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    confirmation-pulse 2.4s ease-in-out 0.7s infinite;
+  filter: drop-shadow(0 0 28px rgba(52, 211, 153, 0.5));
+}
+
+.confirmation-icon--fail {
+  animation: confirmation-pop 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    confirmation-shake 0.5s ease-in-out 0.7s 1;
+  filter: drop-shadow(0 0 28px rgba(239, 68, 68, 0.5));
 }
 
 @keyframes confirmation-pop {
@@ -42,20 +121,64 @@
     transform: scale(1);
   }
   50% {
-    transform: scale(1.08);
+    transform: scale(1.07);
+  }
+}
+
+@keyframes confirmation-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  50% {
+    transform: translateX(6px);
+  }
+  75% {
+    transform: translateX(-3px);
   }
 }
 
 .confirmation-title {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 5vw, 2.8rem);
+  font-size: clamp(2.4rem, 7vw, 3.6rem);
   font-weight: 800;
   letter-spacing: -0.02em;
-  margin-top: 16px;
+  line-height: 1.08;
+  margin-top: 20px;
+}
+
+/* text-gradient animada (desliza o gradiente dentro do texto) */
+.confirmation-title-gradient {
+  background: var(--gradient);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: confirmation-gradient-shift 4.5s ease-in-out infinite;
+}
+
+.confirmation-title-gradient--fail {
+  background: linear-gradient(90deg, #f87171, #fb7185, #f87171);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+@keyframes confirmation-gradient-shift {
+  0%,
+  100% {
+    background-position: 0% center;
+  }
+  50% {
+    background-position: 100% center;
+  }
 }
 
 .confirmation-order-id {
-  margin-top: 10px;
+  margin-top: 14px;
   font-size: 1rem;
   color: var(--text-muted);
 }
@@ -75,11 +198,62 @@
   font-size: 1.05rem;
 }
 
+/* ---------- processando ---------- */
+
+.confirmation-processing {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+}
+
+.confirmation-processing-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: var(--accent);
+  border-right-color: var(--accent-2);
+  animation: confirmation-spin 1s linear infinite;
+  filter: drop-shadow(0 0 14px rgba(139, 92, 246, 0.5));
+}
+
+.confirmation-processing-core {
+  font-size: 2.2rem;
+  animation: confirmation-pulse 2s ease-in-out infinite;
+}
+
+@keyframes confirmation-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.confirmation-processing-msg {
+  margin-top: 16px;
+  font-size: 1.05rem;
+  min-height: 1.6em;
+  animation: confirmation-msg-in 0.45s ease both;
+}
+
+@keyframes confirmation-msg-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ---------- resumo do pedido ---------- */
 
 .confirmation-summary {
   padding: 28px;
-  margin-bottom: 40px;
+  margin-bottom: 44px;
+  border-radius: var(--radius-lg);
 }
 
 .confirmation-section-title {
@@ -132,47 +306,61 @@
 
 .confirmation-row-total dd {
   font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: 1.4rem;
   font-weight: 800;
   color: var(--success);
 }
 
-/* ---------- ingressos ---------- */
+/* ---------- ingressos (tickets premium) ---------- */
 
 .confirmation-tickets {
-  margin-bottom: 44px;
+  margin-bottom: 48px;
 }
 
 .confirmation-tickets-grid {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
 .ticket {
   display: grid;
-  grid-template-columns: 110px 1fr;
+  grid-template-columns: 104px 1fr auto;
+  align-items: stretch;
   background: var(--surface-2);
   border: 1.5px dashed rgba(139, 92, 246, 0.5);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   position: relative;
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  animation: confirmation-ticket-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* entrada em cascata (delay inline por índice) */
+@keyframes confirmation-ticket-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .ticket:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   box-shadow: var(--shadow-glow);
 }
 
-/* furos laterais do ingresso */
+/* furos laterais do ingresso (na emenda canhoto/corpo) */
 .ticket::before,
 .ticket::after {
   content: '';
   position: absolute;
-  left: 110px;
-  width: 22px;
-  height: 22px;
+  left: 104px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: var(--bg);
   border: 1.5px dashed rgba(139, 92, 246, 0.5);
@@ -181,11 +369,11 @@
 }
 
 .ticket::before {
-  top: -12px;
+  top: -13px;
 }
 
 .ticket::after {
-  bottom: -12px;
+  bottom: -13px;
 }
 
 .ticket-stub {
@@ -194,15 +382,16 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 20px 10px;
+  padding: 22px 10px;
   background: var(--gradient);
   color: #fff;
+  border-right: 1.5px dashed rgba(139, 92, 246, 0.5);
 }
 
 .ticket-stub-label {
   font-size: 0.65rem;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
@@ -218,13 +407,13 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 20px 24px;
+  padding: 20px 22px;
   min-width: 0;
 }
 
 .ticket-event {
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.02rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -237,7 +426,7 @@
 
 .ticket-code {
   font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace;
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--accent-3);
@@ -250,8 +439,31 @@
   font-size: 0.75rem;
 }
 
+/* QR-code fake decorativo (quadrados CSS) */
+.ticket-qr {
+  align-self: center;
+  display: grid;
+  grid-template-columns: repeat(5, 8px);
+  grid-auto-rows: 8px;
+  gap: 2px;
+  margin: 0 22px 0 4px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.ticket-qr-cell {
+  background: var(--text);
+  border-radius: 1px;
+}
+
+.ticket-qr-cell.is-empty {
+  background: transparent;
+}
+
 .confirmation-email-note {
-  margin-top: 20px;
+  margin-top: 22px;
   font-size: 0.9rem;
   text-align: center;
 }
@@ -260,15 +472,7 @@
   color: var(--text);
 }
 
-/* ---------- estados de processamento / falha ---------- */
-
-.confirmation-spinner {
-  margin-top: 8px;
-}
-
-.confirmation-icon--fail {
-  filter: drop-shadow(0 0 24px rgba(239, 68, 68, 0.45));
-}
+/* ---------- aviso de timeout ---------- */
 
 .confirmation-warning {
   display: flex;
@@ -297,7 +501,7 @@
 
 @media (max-width: 560px) {
   .confirmation {
-    padding-top: 40px;
+    padding-top: 44px;
   }
 
   .confirmation-summary {
@@ -305,25 +509,73 @@
   }
 
   .ticket {
-    grid-template-columns: 64px 1fr;
+    grid-template-columns: 60px 1fr auto;
   }
 
   .ticket::before,
   .ticket::after {
-    left: 64px;
+    left: 60px;
+  }
+
+  .ticket-stub {
+    padding: 16px 6px;
   }
 
   .ticket-stub-label {
-    writing-mode: horizontal-tb;
-    transform: none;
-    font-size: 0.6rem;
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
   }
 
   .ticket-body {
-    padding: 16px 18px;
+    padding: 16px 16px;
+  }
+
+  .ticket-code {
+    font-size: 0.98rem;
+  }
+
+  .ticket-qr {
+    grid-template-columns: repeat(5, 6px);
+    grid-auto-rows: 6px;
+    margin: 0 12px 0 2px;
+    padding: 6px;
   }
 
   .confirmation-actions .btn {
     width: 100%;
+  }
+}
+
+@media (max-width: 400px) {
+  .ticket {
+    grid-template-columns: 60px 1fr;
+  }
+
+  .ticket-qr {
+    display: none;
+  }
+}
+
+/* ---------- movimento reduzido ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .confirmation-confetti {
+    display: none;
+  }
+
+  .confirmation-icon,
+  .confirmation-icon--fail,
+  .confirmation-icon-wrap::before,
+  .confirmation-icon-wrap::after,
+  .confirmation-processing-ring,
+  .confirmation-processing-core,
+  .confirmation-processing-msg,
+  .confirmation-title-gradient,
+  .ticket {
+    animation: none;
+  }
+
+  .ticket {
+    opacity: 1;
   }
 }

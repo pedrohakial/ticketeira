@@ -9,6 +9,7 @@ import {
   formatTime,
 } from '../data/store';
 import { EventCover } from '../components/EventCard';
+import { useReveal } from '../hooks/useReveal';
 import './CreateEvent.css';
 
 const EMOJI_OPTIONS = ['🎤', '🎸', '🎧', '🎷', '🎭', '🎪', '🎬', '🎮', '🌙', '⚡'];
@@ -34,6 +35,9 @@ export default function CreateEvent() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+
+  const headerRef = useReveal();
+  const previewRef = useReveal();
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -133,36 +137,50 @@ export default function CreateEvent() {
   const minPrice = Math.min(...previewEvent.tiers.map((t) => t.price));
   const capacity = previewEvent.tiers.reduce((a, t) => a + t.total, 0);
 
+  // Bloco de data do preview (dia grande + mês).
+  const previewDate = new Date(previewEvent.date);
+  const previewDay = String(previewDate.getDate()).padStart(2, '0');
+  const previewMonth = previewDate
+    .toLocaleString('pt-BR', { month: 'short' })
+    .replace('.', '')
+    .toUpperCase();
+
   return (
-    <div className="container create-event fade-up">
-      <header className="create-event-header">
-        <span className="badge">🎟️ Organizador</span>
-        <h1 className="section-title">
-          Crie seu <span className="text-gradient">evento</span>
+    <div className="container ce">
+      <header className="ce-header reveal" ref={headerRef}>
+        <span className="badge">🎟️ Modo produtor</span>
+        <h1 className="ce-title">
+          Lance seu <span className="text-gradient">show</span>
         </h1>
-        <p className="muted">Preencha os detalhes e comece a vender ingressos em minutos.</p>
+        <p className="muted ce-subtitle">
+          Do palco à pista em minutos: monte o evento, crie os lotes e abra as vendas.
+        </p>
       </header>
 
-      <div className="create-event-layout">
-        <form className="create-event-form card" onSubmit={handleSubmit} noValidate>
-          <div className="create-event-cover-preview">
-            <EventCover event={previewEvent} className="create-event-cover" />
-            <p className="muted create-event-cover-hint">Capa gerada a partir do emoji + gradiente</p>
-          </div>
+      <div className="ce-layout">
+        <form className="ce-form" onSubmit={handleSubmit} noValidate>
+          {/* ---------- 01 · Identidade ---------- */}
+          <section className="glass ce-section">
+            <div className="ce-section-head">
+              <span className="ce-section-num" aria-hidden="true">01</span>
+              <div>
+                <h2 className="ce-section-title">Identidade</h2>
+                <p className="muted ce-section-sub">A cara do seu evento no lineup.</p>
+              </div>
+            </div>
 
-          <div className="field">
-            <label htmlFor="ce-title">Título do evento *</label>
-            <input
-              id="ce-title"
-              type="text"
-              placeholder="Ex: Noite Neon — Edição Verão"
-              value={form.title}
-              onChange={(e) => update('title', e.target.value)}
-            />
-            {errors.title && <p className="create-event-error">{errors.title}</p>}
-          </div>
+            <div className="field">
+              <label htmlFor="ce-title">Título do evento *</label>
+              <input
+                id="ce-title"
+                type="text"
+                placeholder="Ex: Noite Neon — Edição Verão"
+                value={form.title}
+                onChange={(e) => update('title', e.target.value)}
+              />
+              {errors.title && <p className="ce-error">{errors.title}</p>}
+            </div>
 
-          <div className="field-row">
             <div className="field">
               <label htmlFor="ce-category">Categoria *</label>
               <select
@@ -179,177 +197,259 @@ export default function CreateEvent() {
             </div>
 
             <div className="field">
-              <label htmlFor="ce-emoji">Emoji da capa *</label>
-              <select
-                id="ce-emoji"
-                value={form.emoji}
-                onChange={(e) => update('emoji', e.target.value)}
-              >
+              <span className="ce-label" id="ce-emoji-label">Emoji da capa *</span>
+              <div className="ce-emoji-grid" role="group" aria-labelledby="ce-emoji-label">
                 {EMOJI_OPTIONS.map((em) => (
-                  <option key={em} value={em}>
+                  <button
+                    key={em}
+                    type="button"
+                    className={`ce-emoji${form.emoji === em ? ' is-active' : ''}`}
+                    onClick={() => update('emoji', em)}
+                    aria-pressed={form.emoji === em}
+                    aria-label={`Usar emoji ${em} na capa`}
+                  >
                     {em}
-                  </option>
+                  </button>
                 ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="field">
-            <label htmlFor="ce-date">Data e horário *</label>
-            <input
-              id="ce-date"
-              type="datetime-local"
-              value={form.date}
-              onChange={(e) => update('date', e.target.value)}
-            />
-            {errors.date && <p className="create-event-error">{errors.date}</p>}
-          </div>
-
-          <div className="field-row">
-            <div className="field">
-              <label htmlFor="ce-venue">Local *</label>
-              <input
-                id="ce-venue"
-                type="text"
-                placeholder="Ex: Espaço Unimed"
-                value={form.venue}
-                onChange={(e) => update('venue', e.target.value)}
-              />
-              {errors.venue && <p className="create-event-error">{errors.venue}</p>}
-            </div>
-
-            <div className="field">
-              <label htmlFor="ce-city">Cidade *</label>
-              <input
-                id="ce-city"
-                type="text"
-                placeholder="Ex: São Paulo, SP"
-                value={form.city}
-                onChange={(e) => update('city', e.target.value)}
-              />
-              {errors.city && <p className="create-event-error">{errors.city}</p>}
-            </div>
-          </div>
-
-          <div className="field">
-            <label htmlFor="ce-organizer">Nome do organizador *</label>
-            <input
-              id="ce-organizer"
-              type="text"
-              placeholder="Ex: Sua Produtora"
-              value={form.organizer}
-              onChange={(e) => update('organizer', e.target.value)}
-            />
-            {errors.organizer && <p className="create-event-error">{errors.organizer}</p>}
-          </div>
-
-          <div className="field">
-            <label htmlFor="ce-description">Descrição *</label>
-            <textarea
-              id="ce-description"
-              placeholder="Conte o que vai rolar, atrações, estrutura, regras..."
-              value={form.description}
-              onChange={(e) => update('description', e.target.value)}
-            />
-            {errors.description && <p className="create-event-error">{errors.description}</p>}
-          </div>
-
-          <div className="field">
-            <label>Cor da capa *</label>
-            <div className="create-event-swatches">
-              {GRADIENTS.map((g) => (
-                <button
-                  key={g}
-                  type="button"
-                  className={`create-event-swatch${form.gradient === g ? ' is-active' : ''}`}
-                  style={{ background: g }}
-                  onClick={() => update('gradient', g)}
-                  aria-label="Escolher gradiente"
-                />
-              ))}
-            </div>
-          </div>
-
-          <section className="create-event-tiers">
-            <div className="create-event-tiers-head">
-              <h2 className="create-event-tiers-title">Lotes de ingressos</h2>
-              <button type="button" className="btn btn-ghost create-event-add-tier" onClick={addTier}>
-                + Adicionar lote
-              </button>
-            </div>
-
-            {tiers.map((tier, index) => (
-              <div className="create-event-tier" key={index}>
-                <div className="field create-event-tier-name">
-                  <label htmlFor={`ce-tier-name-${index}`}>Nome do lote *</label>
-                  <input
-                    id={`ce-tier-name-${index}`}
-                    type="text"
-                    placeholder="Ex: Pista, VIP, 1º lote"
-                    value={tier.name}
-                    onChange={(e) => updateTier(index, 'name', e.target.value)}
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor={`ce-tier-price-${index}`}>Preço (R$) *</label>
-                  <input
-                    id={`ce-tier-price-${index}`}
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0,00"
-                    value={tier.price}
-                    onChange={(e) => updateTier(index, 'price', e.target.value)}
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor={`ce-tier-total-${index}`}>Quantidade *</label>
-                  <input
-                    id={`ce-tier-total-${index}`}
-                    type="number"
-                    min="1"
-                    step="1"
-                    placeholder="100"
-                    value={tier.total}
-                    onChange={(e) => updateTier(index, 'total', e.target.value)}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="create-event-remove-tier"
-                  onClick={() => removeTier(index)}
-                  disabled={tiers.length === 1}
-                  aria-label="Remover lote"
-                  title="Remover lote"
-                >
-                  ✕
-                </button>
               </div>
-            ))}
-            {errors.tiers && <p className="create-event-error">{errors.tiers}</p>}
+            </div>
+
+            <div className="field">
+              <span className="ce-label" id="ce-gradient-label">Cor da capa *</span>
+              <div className="ce-swatches" role="group" aria-labelledby="ce-gradient-label">
+                {GRADIENTS.map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    className={`ce-swatch${form.gradient === g ? ' is-active' : ''}`}
+                    style={{ background: g }}
+                    onClick={() => update('gradient', g)}
+                    aria-pressed={form.gradient === g}
+                    aria-label="Escolher gradiente"
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="field">
+              <label htmlFor="ce-organizer">Nome do organizador *</label>
+              <input
+                id="ce-organizer"
+                type="text"
+                placeholder="Ex: Sua Produtora"
+                value={form.organizer}
+                onChange={(e) => update('organizer', e.target.value)}
+              />
+              {errors.organizer && <p className="ce-error">{errors.organizer}</p>}
+            </div>
+
+            <div className="field">
+              <label htmlFor="ce-description">Descrição *</label>
+              <textarea
+                id="ce-description"
+                placeholder="Conte o que vai rolar, atrações, estrutura, regras..."
+                value={form.description}
+                onChange={(e) => update('description', e.target.value)}
+              />
+              {errors.description && <p className="ce-error">{errors.description}</p>}
+            </div>
           </section>
 
-          {submitError && <p className="create-event-error">{submitError}</p>}
+          {/* ---------- 02 · Quando & Onde ---------- */}
+          <section className="glass ce-section">
+            <div className="ce-section-head">
+              <span className="ce-section-num" aria-hidden="true">02</span>
+              <div>
+                <h2 className="ce-section-title">Quando &amp; Onde</h2>
+                <p className="muted ce-section-sub">Marque o ponto de encontro da galera.</p>
+              </div>
+            </div>
 
-          <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={submitting}>
-            {submitting ? '⏳ Publicando…' : '🚀 Publicar evento'}
-          </button>
+            <div className="field">
+              <label htmlFor="ce-date">Data e horário *</label>
+              <input
+                id="ce-date"
+                type="datetime-local"
+                value={form.date}
+                onChange={(e) => update('date', e.target.value)}
+              />
+              {errors.date && <p className="ce-error">{errors.date}</p>}
+            </div>
+
+            <div className="field-row">
+              <div className="field">
+                <label htmlFor="ce-venue">Local *</label>
+                <input
+                  id="ce-venue"
+                  type="text"
+                  placeholder="Ex: Espaço Unimed"
+                  value={form.venue}
+                  onChange={(e) => update('venue', e.target.value)}
+                />
+                {errors.venue && <p className="ce-error">{errors.venue}</p>}
+              </div>
+
+              <div className="field">
+                <label htmlFor="ce-city">Cidade *</label>
+                <input
+                  id="ce-city"
+                  type="text"
+                  placeholder="Ex: São Paulo, SP"
+                  value={form.city}
+                  onChange={(e) => update('city', e.target.value)}
+                />
+                {errors.city && <p className="ce-error">{errors.city}</p>}
+              </div>
+            </div>
+          </section>
+
+          {/* ---------- 03 · Lotes ---------- */}
+          <section className="glass ce-section">
+            <div className="ce-section-head">
+              <span className="ce-section-num" aria-hidden="true">03</span>
+              <div>
+                <h2 className="ce-section-title">Lotes</h2>
+                <p className="muted ce-section-sub">Pista, VIP, camarote — precifique cada experiência.</p>
+              </div>
+            </div>
+
+            <div className="ce-tiers">
+              {tiers.map((tier, index) => (
+                <div className="ce-tier" key={index}>
+                  <div className="ce-tier-head">
+                    <span className="ce-tier-tag">Lote {index + 1}</span>
+                    <button
+                      type="button"
+                      className="ce-tier-remove"
+                      onClick={() => removeTier(index)}
+                      disabled={tiers.length === 1}
+                      aria-label="Remover lote"
+                      title="Remover lote"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className="ce-tier-grid">
+                    <div className="field ce-tier-name">
+                      <label htmlFor={`ce-tier-name-${index}`}>Nome do lote *</label>
+                      <input
+                        id={`ce-tier-name-${index}`}
+                        type="text"
+                        placeholder="Ex: Pista, VIP, 1º lote"
+                        value={tier.name}
+                        onChange={(e) => updateTier(index, 'name', e.target.value)}
+                      />
+                    </div>
+                    <div className="field">
+                      <label htmlFor={`ce-tier-price-${index}`}>Preço (R$) *</label>
+                      <input
+                        id={`ce-tier-price-${index}`}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0,00"
+                        value={tier.price}
+                        onChange={(e) => updateTier(index, 'price', e.target.value)}
+                      />
+                    </div>
+                    <div className="field">
+                      <label htmlFor={`ce-tier-total-${index}`}>Quantidade *</label>
+                      <input
+                        id={`ce-tier-total-${index}`}
+                        type="number"
+                        min="1"
+                        step="1"
+                        placeholder="100"
+                        value={tier.total}
+                        onChange={(e) => updateTier(index, 'total', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {errors.tiers && <p className="ce-error">{errors.tiers}</p>}
+
+            <button type="button" className="btn btn-ghost ce-add-tier" onClick={addTier}>
+              ＋ Adicionar lote
+            </button>
+          </section>
+
+          {/* ---------- 04 · Revisão ---------- */}
+          <section className="glass ce-section">
+            <div className="ce-section-head">
+              <span className="ce-section-num" aria-hidden="true">04</span>
+              <div>
+                <h2 className="ce-section-title">Revisão</h2>
+                <p className="muted ce-section-sub">Último soundcheck antes de subir no ar.</p>
+              </div>
+            </div>
+
+            <ul className="ce-review">
+              <li>
+                <span className="ce-review-key">🎤 Evento</span>
+                <span className="ce-review-val">{previewEvent.title}</span>
+              </li>
+              <li>
+                <span className="ce-review-key">📅 Quando</span>
+                <span className="ce-review-val">
+                  {form.date
+                    ? `${formatDate(previewEvent.date)} · ${formatTime(previewEvent.date)}`
+                    : 'Defina na seção 02'}
+                </span>
+              </li>
+              <li>
+                <span className="ce-review-key">📍 Onde</span>
+                <span className="ce-review-val">
+                  {previewEvent.venue} — {previewEvent.city}
+                </span>
+              </li>
+              <li>
+                <span className="ce-review-key">🎟️ Lotes</span>
+                <span className="ce-review-val">
+                  {tiers.length} {tiers.length === 1 ? 'lote' : 'lotes'}
+                  {capacity > 0 ? ` · ${capacity} ingressos` : ''}
+                </span>
+              </li>
+              <li>
+                <span className="ce-review-key">💸 A partir de</span>
+                <span className="ce-review-val ce-review-price">{formatBRL(minPrice)}</span>
+              </li>
+            </ul>
+
+            {submitError && <p className="ce-error">{submitError}</p>}
+
+            <button
+              type="submit"
+              className="btn btn-primary btn-lg btn-block ce-submit"
+              disabled={submitting}
+            >
+              {submitting ? '⏳ Publicando…' : '🚀 Publicar evento'}
+            </button>
+          </section>
         </form>
 
-        <aside className="create-event-preview">
-          <p className="create-event-preview-label muted">Preview ao vivo</p>
-          <div className="card create-event-preview-card">
-            <EventCover event={previewEvent} />
-            <div className="create-event-preview-body">
+        <aside className="ce-preview reveal" ref={previewRef}>
+          <p className="ce-preview-label">✨ Preview ao vivo</p>
+          <div className="card ce-preview-card">
+            <div className="ce-preview-cover-wrap">
+              <EventCover event={previewEvent} />
+              <div className="ce-preview-dateblock" aria-hidden="true">
+                <span className="ce-preview-day">{previewDay}</span>
+                <span className="ce-preview-month">{previewMonth}</span>
+              </div>
+            </div>
+            <div className="ce-preview-body">
               <span className="badge">{previewEvent.category}</span>
-              <h3 className="create-event-preview-title">{previewEvent.title}</h3>
+              <h3 className="ce-preview-title">{previewEvent.title}</h3>
               <p className="muted">
                 📅 {formatDate(previewEvent.date)} · {formatTime(previewEvent.date)}
               </p>
               <p className="muted">
                 📍 {previewEvent.venue} — {previewEvent.city}
               </p>
-              <div className="create-event-preview-footer">
+              <div className="ce-preview-footer">
                 <span>
                   a partir de <strong>{formatBRL(minPrice)}</strong>
                 </span>
@@ -357,6 +457,7 @@ export default function CreateEvent() {
               </div>
             </div>
           </div>
+          <p className="muted ce-preview-hint">É assim que seu evento aparece no lineup.</p>
         </aside>
       </div>
     </div>

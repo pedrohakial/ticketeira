@@ -9,6 +9,7 @@ import {
   formatTime,
 } from '../data/store';
 import { EventCover } from '../components/EventCard';
+import { useReveal } from '../hooks/useReveal';
 import './Checkout.css';
 
 // Máscara simples de entrada (apenas formatação visual).
@@ -38,6 +39,10 @@ export default function Checkout() {
   // Pedido pendente criado, aguardando pagamento (modo demonstração).
   const [pendingOrder, setPendingOrder] = useState(null);
   const [confirming, setConfirming] = useState(false);
+
+  const revealStep1 = useReveal();
+  const revealStep2 = useReveal();
+  const revealSummary = useReveal();
 
   useEffect(() => {
     let active = true;
@@ -150,106 +155,150 @@ export default function Checkout() {
     <main className="checkout container fade-up">
       <header className="checkout-header">
         <span className="badge">🔒 Compra segura</span>
-        <h1 className="section-title">
-          Finalizar <span className="text-gradient">pagamento</span>
+        <h1 className="checkout-title">
+          Finalizar <span className="text-gradient">compra</span>
         </h1>
-        <p className="muted">Falta pouco para garantir seu lugar no rolê.</p>
+        <p className="muted">Últimos passos para garantir seu lugar no show.</p>
       </header>
 
       <div className="checkout-grid">
-        <form className="checkout-form card" onSubmit={handleSubmit}>
-          <h2 className="checkout-section-title">👤 Dados do comprador</h2>
-          <div className="field">
-            <label htmlFor="ck-name">Nome completo</label>
-            <input
-              id="ck-name"
-              type="text"
-              placeholder="Como no seu documento"
-              value={buyer.name}
-              onChange={(e) => updateBuyer('name', e.target.value)}
-              autoComplete="name"
-            />
-          </div>
-          <div className="field-row">
-            <div className="field">
-              <label htmlFor="ck-email">E-mail</label>
-              <input
-                id="ck-email"
-                type="email"
-                placeholder="voce@email.com"
-                value={buyer.email}
-                onChange={(e) => updateBuyer('email', e.target.value)}
-                autoComplete="email"
-              />
+        <form className="checkout-form" onSubmit={handleSubmit}>
+          <section className="checkout-step glass reveal" ref={revealStep1}>
+            <div className="checkout-step-head">
+              <span className="checkout-step-num" aria-hidden="true">
+                01
+              </span>
+              <div>
+                <h2 className="checkout-step-title">Seus dados</h2>
+                <p className="muted">Para quem é o ingresso? Capricha aí.</p>
+              </div>
             </div>
+
             <div className="field">
-              <label htmlFor="ck-cpf">CPF</label>
+              <label htmlFor="ck-name">Nome completo</label>
               <input
-                id="ck-cpf"
+                id="ck-name"
                 type="text"
-                inputMode="numeric"
-                placeholder="000.000.000-00"
-                value={buyer.cpf}
-                onChange={(e) => updateBuyer('cpf', maskCPF(e.target.value))}
+                placeholder="Como no seu documento"
+                value={buyer.name}
+                onChange={(e) => updateBuyer('name', e.target.value)}
+                autoComplete="name"
               />
             </div>
-          </div>
-
-          <h2 className="checkout-section-title">💳 Pagamento</h2>
-          <div className="checkout-mp">
-            <span className="checkout-mp-logo" aria-hidden="true">
-              💳
-            </span>
-            <div className="checkout-mp-info">
-              <strong>Pagamento processado pelo Mercado Pago</strong>
-              <p className="muted">
-                Pix, cartão de crédito ou boleto — você escolhe na próxima tela, em ambiente
-                seguro. Nenhum dado de pagamento passa pelos nossos servidores.
-              </p>
+            <div className="field-row">
+              <div className="field">
+                <label htmlFor="ck-email">E-mail</label>
+                <input
+                  id="ck-email"
+                  type="email"
+                  placeholder="voce@email.com"
+                  value={buyer.email}
+                  onChange={(e) => updateBuyer('email', e.target.value)}
+                  autoComplete="email"
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="ck-cpf">CPF</label>
+                <input
+                  id="ck-cpf"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="000.000.000-00"
+                  value={buyer.cpf}
+                  onChange={(e) => updateBuyer('cpf', maskCPF(e.target.value))}
+                />
+              </div>
             </div>
-          </div>
+          </section>
 
-          {error && (
-            <p className="checkout-error" role="alert">
-              ⚠️ {error}
-            </p>
-          )}
+          <section className="checkout-step glass reveal" ref={revealStep2}>
+            <div className="checkout-step-head">
+              <span className="checkout-step-num" aria-hidden="true">
+                02
+              </span>
+              <div>
+                <h2 className="checkout-step-title">Pagamento</h2>
+                <p className="muted">Você escolhe a forma na próxima tela.</p>
+              </div>
+            </div>
 
-          {pendingOrder ? (
-            <div className="checkout-demo" role="status">
-              <p>
-                <strong>⚠️ Mercado Pago não configurado — modo demonstração</strong>
+            <div className="checkout-mp">
+              <span className="checkout-mp-seal" aria-hidden="true">
+                💳
+              </span>
+              <div className="checkout-mp-info">
+                <strong>Pagamento processado pelo Mercado Pago</strong>
+                <p className="muted">
+                  Pix, cartão de crédito ou boleto — você escolhe na próxima tela, em ambiente
+                  seguro. Nenhum dado de pagamento passa pelos nossos servidores.
+                </p>
+                <div className="checkout-mp-brands" aria-label="Formas de pagamento aceitas">
+                  <span className="checkout-mp-pill">Visa</span>
+                  <span className="checkout-mp-pill">Master</span>
+                  <span className="checkout-mp-pill">Pix</span>
+                  <span className="checkout-mp-pill">Boleto</span>
+                </div>
+                <p className="checkout-mp-lock">
+                  🔒 Pagamento processado pelo Mercado Pago com criptografia de ponta a ponta.
+                </p>
+              </div>
+            </div>
+
+            {error && (
+              <p className="checkout-error" role="alert">
+                ⚠️ {error}
               </p>
-              <p className="muted">
-                Pedido <strong>{pendingOrder.id}</strong> criado. Em produção você seria
-                redirecionado ao checkout do Mercado Pago; aqui você pode simular a aprovação do
-                pagamento.
-              </p>
+            )}
+
+            {pendingOrder ? (
+              <div className="checkout-demo" role="status">
+                <p className="checkout-demo-title">
+                  <strong>⚠️ Mercado Pago não configurado — modo demonstração</strong>
+                </p>
+                <p className="muted">
+                  Pedido <strong>{pendingOrder.id}</strong> criado. Em produção você seria
+                  redirecionado ao checkout do Mercado Pago; aqui você pode simular a aprovação
+                  do pagamento.
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-success btn-block"
+                  onClick={handleDemoConfirm}
+                  disabled={confirming}
+                >
+                  {confirming ? (
+                    <>
+                      <span className="spinner" aria-hidden="true" /> Confirmando…
+                    </>
+                  ) : (
+                    '✅ Simular pagamento aprovado'
+                  )}
+                </button>
+              </div>
+            ) : (
               <button
-                type="button"
-                className="btn btn-success btn-block"
-                onClick={handleDemoConfirm}
-                disabled={confirming}
+                type="submit"
+                className="btn btn-primary btn-block btn-lg checkout-submit"
+                disabled={loading}
               >
-                {confirming ? '⏳ Confirmando…' : '✅ Simular pagamento aprovado'}
+                {loading ? (
+                  <>
+                    <span className="spinner" aria-hidden="true" /> Redirecionando ao Mercado
+                    Pago…
+                  </>
+                ) : (
+                  <>🎟️ Garantir meu ingresso · {formatBRL(total)}</>
+                )}
               </button>
-            </div>
-          ) : (
-            <button
-              type="submit"
-              className="btn btn-primary btn-block btn-lg"
-              disabled={loading}
-            >
-              {loading ? '⏳ Criando pedido…' : `Ir para o pagamento · ${formatBRL(total)}`}
-            </button>
-          )}
-          <p className="checkout-secure-note muted">
-            🔒 Pagamento com segurança pelo Mercado Pago.
-          </p>
+            )}
+            <p className="checkout-secure-note muted">
+              🔒 Pagamento com segurança pelo Mercado Pago.
+            </p>
+          </section>
         </form>
 
-        <aside className="checkout-summary card">
-          <h2 className="checkout-section-title">🎟️ Resumo do pedido</h2>
+        <aside className="checkout-summary glass reveal" ref={revealSummary}>
+          <span className="checkout-ticket-tag">🎟️ Seu ingresso</span>
           <div className="checkout-event">
             <EventCover event={event} className="checkout-cover" />
             <div className="checkout-event-info">
@@ -262,6 +311,8 @@ export default function Checkout() {
               </p>
             </div>
           </div>
+
+          <div className="checkout-ticket-tear" aria-hidden="true" />
 
           <div className="checkout-lines">
             <div className="checkout-line">

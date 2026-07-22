@@ -1,64 +1,190 @@
+/* ============================================================
+   EventCard — redesign "festival" com tilt 3D, shine e capa neon
+   ============================================================ */
+
 .event-card {
-  display: flex;
-  flex-direction: column;
+  display: block;
+  position: relative;
   overflow: hidden;
-  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+  perspective: 900px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .event-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(139, 92, 246, 0.5);
-  box-shadow: 0 18px 50px rgba(139, 92, 246, 0.25);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-glow);
+}
+
+/* Brilho "shine" que atravessa o card no hover */
+.event-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 45%;
+  background: linear-gradient(
+    105deg,
+    transparent,
+    rgba(255, 255, 255, 0.14) 45%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.14) 55%,
+    transparent
+  );
+  transform: skewX(-18deg) translateX(0);
+  transition: transform 0.9s ease;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.event-card:hover::before {
+  transform: skewX(-18deg) translateX(360%);
+}
+
+.event-card-tilt {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.18s ease-out;
+  will-change: transform;
+}
+
+/* ---------- Capa ---------- */
+
+.event-card-cover-wrap {
+  position: relative;
 }
 
 .event-cover {
   position: relative;
-  height: 170px;
+  height: 190px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 
+/* Padrão de linhas diagonais sutis sobre o gradiente */
+.event-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      -55deg,
+      rgba(255, 255, 255, 0.05) 0 1px,
+      transparent 1px 9px
+    ),
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.12), transparent 55%);
+  pointer-events: none;
+}
+
+/* Sombra inferior para transição suave com o corpo */
 .event-cover::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(400px 160px at 50% 120%, rgba(0, 0, 0, 0.45), transparent);
+  background: linear-gradient(180deg, transparent 45%, rgba(0, 0, 0, 0.55));
+  pointer-events: none;
 }
 
 .event-cover-emoji {
-  font-size: 4rem;
-  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.4));
-  transition: transform 0.25s ease;
+  position: relative;
+  z-index: 1;
+  font-size: 4.5rem;
+  filter:
+    drop-shadow(0 0 18px rgba(192, 132, 252, 0.55))
+    drop-shadow(0 10px 22px rgba(0, 0, 0, 0.45));
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .event-card:hover .event-cover-emoji {
-  transform: scale(1.15) rotate(-4deg);
+  transform: scale(1.18) rotate(-5deg) translateZ(30px);
 }
+
+/* Badge de categoria flutuando sobre a capa */
+.event-card-cat {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+}
+
+/* Bloco de data sobre a capa */
+.event-card-date {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  min-width: 56px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+}
+
+.event-card-date-day {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.event-card-date-month {
+  margin-top: 4px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+}
+
+/* ---------- Corpo ---------- */
 
 .event-card-body {
   padding: 18px 20px 20px;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
+  flex: 1;
 }
 
 .event-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+}
+
+.event-card-countdown {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent-2);
 }
 
 .event-card-hot {
   font-size: 0.78rem;
   font-weight: 700;
   color: #ffb1c8;
+  animation: event-card-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes event-card-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
 }
 
 .event-card-title {
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: 1.12rem;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
@@ -68,28 +194,101 @@
   color: var(--text-muted);
 }
 
+/* ---------- Lotação ---------- */
+
+.event-card-occ {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.event-card-occ-track {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.event-card-occ-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.6s ease;
+}
+
+.event-card-occ-fill.is-low {
+  background: var(--success);
+}
+
+.event-card-occ-fill.is-mid {
+  background: #f59e0b;
+}
+
+.event-card-occ-fill.is-high {
+  background: var(--danger);
+  box-shadow: 0 0 8px rgba(244, 63, 94, 0.6);
+}
+
+.event-card-occ-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* ---------- Rodapé ---------- */
+
 .event-card-footer {
-  margin-top: 8px;
+  margin-top: auto;
+  padding-top: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   border-top: 1px solid var(--border);
-  padding-top: 12px;
 }
 
 .event-card-price {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: var(--text-faint);
 }
 
 .event-card-price strong {
   display: block;
-  font-size: 1.05rem;
-  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 800;
 }
 
 .event-card-rating {
   font-size: 0.88rem;
   font-weight: 700;
   color: #fbbf24;
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.35);
+}
+
+/* ---------- Acessibilidade / touch ---------- */
+
+@media (hover: none), (pointer: coarse) {
+  .event-card::before {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-card,
+  .event-card::before,
+  .event-card-tilt,
+  .event-cover-emoji,
+  .event-card-occ-fill {
+    transition: none;
+  }
+
+  .event-card:hover .event-cover-emoji {
+    transform: none;
+  }
+
+  .event-card-hot {
+    animation: none;
+  }
 }
