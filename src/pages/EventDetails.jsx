@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { EventCover } from '../components/EventCard';
 import { formatBRL, formatDate, formatTime, getEvent } from '../data/store';
@@ -9,15 +9,53 @@ const MAX_QTY = 10;
 export default function EventDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const event = getEvent(id);
 
-  const availableTiers = useMemo(
-    () => (event ? event.tiers.filter((t) => t.sold < t.total) : []),
-    [event],
-  );
-
-  const [tierId, setTierId] = useState(() => availableTiers[0]?.id || null);
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [tierId, setTierId] = useState(null);
   const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError('');
+    getEvent(id)
+      .then((data) => {
+        if (!active) return;
+        setEvent(data);
+        // pré-seleciona o primeiro lote disponível
+        const firstAvailable = data?.tiers.find((t) => t.sold < t.total);
+        setTierId(firstAvailable?.id || null);
+      })
+      .catch((err) => active && setError(err.message || 'Não foi possível carregar o evento.'))
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="container page-state">
+        <span className="spinner" aria-hidden="true" />
+        <p className="muted">Carregando evento…</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container page-state">
+        <p className="page-state-error" role="alert">
+          ⚠️ {error}
+        </p>
+        <Link to="/" className="btn btn-ghost">
+          Voltar para a página inicial
+        </Link>
+      </div>
+    );
+  }
 
   if (!event) {
     return (

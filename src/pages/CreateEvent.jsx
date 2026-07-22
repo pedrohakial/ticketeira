@@ -32,6 +32,8 @@ export default function CreateEvent() {
   const [form, setForm] = useState(initialForm);
   const [tiers, setTiers] = useState([emptyTier()]);
   const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -69,28 +71,35 @@ export default function CreateEvent() {
     return Object.keys(next).length === 0;
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (!validate()) return;
 
-    const novoEvento = createEvent({
-      emoji: form.emoji,
-      gradient: form.gradient,
-      title: form.title.trim(),
-      category: form.category,
-      date: form.date,
-      venue: form.venue.trim(),
-      city: form.city.trim(),
-      organizer: form.organizer.trim(),
-      description: form.description.trim(),
-      tiers: tiers.map((t) => ({
-        name: t.name.trim(),
-        price: Number(t.price),
-        total: Number(t.total),
-      })),
-    });
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const novoEvento = await createEvent({
+        emoji: form.emoji,
+        gradient: form.gradient,
+        title: form.title.trim(),
+        category: form.category,
+        date: form.date,
+        venue: form.venue.trim(),
+        city: form.city.trim(),
+        organizer: form.organizer.trim(),
+        description: form.description.trim(),
+        tiers: tiers.map((t) => ({
+          name: t.name.trim(),
+          price: Number(t.price),
+          total: Number(t.total),
+        })),
+      });
 
-    navigate(`/evento/${novoEvento.id}`);
+      navigate(`/evento/${novoEvento.id}`);
+    } catch (err) {
+      setSubmitting(false);
+      setSubmitError(err.message || 'Não foi possível publicar o evento. Tente novamente.');
+    }
   }
 
   // Evento provisório só para o preview ao vivo.
@@ -320,8 +329,10 @@ export default function CreateEvent() {
             {errors.tiers && <p className="create-event-error">{errors.tiers}</p>}
           </section>
 
-          <button type="submit" className="btn btn-primary btn-lg btn-block">
-            🚀 Publicar evento
+          {submitError && <p className="create-event-error">{submitError}</p>}
+
+          <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={submitting}>
+            {submitting ? '⏳ Publicando…' : '🚀 Publicar evento'}
           </button>
         </form>
 

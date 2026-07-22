@@ -1,10 +1,17 @@
-import { useState, useMemo } from 'react';
-import { useParams, useSearchParams, useNavigate, Navigate } from 'react-router-dom';
-import { getEvent, purchaseTickets, formatBRL, formatDate, formatTime } from '../data/store';
+import { useEffect, useState } from 'react';
+import { useParams, useSearchParams, useNavigate, Navigate, Link } from 'react-router-dom';
+import {
+  getEvent,
+  createOrder,
+  confirmOrderDemo,
+  formatBRL,
+  formatDate,
+  formatTime,
+} from '../data/store';
 import { EventCover } from '../components/EventCard';
 import './Checkout.css';
 
-// Máscaras simples de entrada (apenas formatação visual).
+// Máscara simples de entrada (apenas formatação visual).
 function maskCPF(value) {
   const digits = value.replace(/\D/g, '').slice(0, 11);
   return digits
@@ -13,63 +20,41 @@ function maskCPF(value) {
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 }
 
-function maskCardNumber(value) {
-  return value
-    .replace(/\D/g, '')
-    .slice(0, 16)
-    .replace(/(\d{4})(?=\d)/g, '$1 ');
-}
-
-function maskExpiry(value) {
-  const digits = value.replace(/\D/g, '').slice(0, 4);
-  if (digits.length <= 2) return digits;
-  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-}
-
-function randomPixKey() {
-  const hex = () =>
-    Math.floor(Math.random() * 0xffffffff)
-      .toString(16)
-      .padStart(8, '0');
-  return `${hex()}-${hex().slice(0, 4)}-${hex().slice(0, 4)}-${hex().slice(0, 4)}-${hex()}${hex().slice(0, 4)}`;
-}
-
 export default function Checkout() {
   const { eventId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const event = getEvent(eventId);
   const tierId = searchParams.get('tier');
   const quantity = Math.max(1, parseInt(searchParams.get('qty'), 10) || 1);
-  const tier = event?.tiers.find((t) => t.id === tierId);
 
-  // Chave PIX aleatória gerada uma vez por sessão de checkout.
-  const pixKey = useMemo(() => randomPixKey(), []);
+  const [event, setEvent] = useState(null);
+  const [loadingEvent, setLoadingEvent] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   const [buyer, setBuyer] = useState({ name: '', email: '', cpf: '' });
-  const [paymentMethod, setPaymentMethod] = useState('pix');
-  const [card, setCard] = useState({ number: '', expiry: '', cvv: '', holder: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // Pedido pendente criado, aguardando pagamento (modo demonstração).
+  const [pendingOrder, setPendingOrder] = useState(null);
+  const [confirming, setConfirming] = useState(false);
 
-  if (!event || !tier) {
-    return <Navigate to="/" replace />;
-  }
-
-  const subtotal = tier.price * quantity;
-  const fee = Math.round(subtotal * 0.1 * 100) / 100;
-  const total = subtotal + fee;
+  useEffect(() => {
+    let active = true;
+    getEvent(eventId)
+      .then((data) => active && setEvent(data))
+      .catch((err) => active && setLoadError(err.message || 'Não foi possível carregar o evento.'))
+      .finally(() => active && setLoadingEvent(false));
+    return () => {
+      active = false;
+    };
+  }, [eventId]);
 
   function updateBuyer(field, value) {
     setBuyer((prev) => ({ ...prev, [field]: value }));
   }
 
-  function updateCard(field, value) {
-    setCard((prev) => ({ ...prev, [field]: value }));
-  }
-
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError('');
 
@@ -77,34 +62,89 @@ export default function Checkout() {
       setError('Preencha nome, e-mail e CPF completos para continuar.');
       return;
     }
-    if (paymentMethod === 'cartao') {
-      const numberOk = card.number.replace(/\D/g, '').length === 16;
-      const expiryOk = /^\d{2}\/\d{2}$/.test(card.expiry);
-      const cvvOk = card.cvv.length >= 3;
-      if (!numberOk || !expiryOk || !cvvOk || !card.holder.trim()) {
-        setError('Confira os dados do cartão: número, validade, CVV e nome impresso.');
-        return;
-      }
-    }
 
     setLoading(true);
-    // Simula o processamento do pagamento antes de efetivar a compra.
-    setTimeout(() => {
+    try {
+      // 1) Cria o pedido pendente no Supabase (estoque baixa só na confirmação).
+      const order = await createOrder({
+        eventId,
+        tierId,
+        quantity,
+        buyer: { name: buyer.name.trim(), email: buyer.email.trim(), cpf: buyer.cpf },
+        paymentMethod: 'mercadopago',
+      });
+
+      // 2) Tenta criar a preferência de pagamento no Mercado Pago e redirecionar.
+      //    Sem MP configurado (503) ou sem as rotas /api (dev local), cai no
+      //    modo demonstração abaixo.
       try {
-        const order = purchaseTickets({
-          eventId,
-          tierId,
-          quantity,
-          buyer: { name: buyer.name.trim(), email: buyer.email.trim(), cpf: buyer.cpf },
-          paymentMethod: paymentMethod === 'pix' ? 'PIX' : 'Cartão',
+        const res = await fetch('/api/create-preference', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: order.id }),
         });
-        navigate(`/confirmacao/${order.id}`);
-      } catch (err) {
-        setLoading(false);
-        setError(err.message || 'Não foi possível concluir o pagamento. Tente novamente.');
+        if (res.ok) {
+          const pref = await res.json();
+          if (pref?.init_point) {
+            window.location.href = pref.init_point;
+            return;
+          }
+        }
+      } catch {
+        // rota /api indisponível (dev local) ou resposta inválida — segue para o demo
       }
-    }, 1200);
+
+      setPendingOrder(order);
+    } catch (err) {
+      setError(err.message || 'Não foi possível concluir o pedido. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   }
+
+  async function handleDemoConfirm() {
+    if (!pendingOrder) return;
+    setConfirming(true);
+    setError('');
+    try {
+      await confirmOrderDemo(pendingOrder.id);
+      navigate(`/confirmacao/${pendingOrder.id}`);
+    } catch (err) {
+      setConfirming(false);
+      setError(err.message || 'Não foi possível confirmar o pagamento. Tente novamente.');
+    }
+  }
+
+  if (loadingEvent) {
+    return (
+      <div className="container page-state">
+        <span className="spinner" aria-hidden="true" />
+        <p className="muted">Carregando checkout…</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="container page-state">
+        <p className="page-state-error" role="alert">
+          ⚠️ {loadError}
+        </p>
+        <Link to="/" className="btn btn-ghost">
+          Voltar para a página inicial
+        </Link>
+      </div>
+    );
+  }
+
+  const tier = event?.tiers.find((t) => t.id === tierId);
+  if (!event || !tier) {
+    return <Navigate to="/" replace />;
+  }
+
+  const subtotal = tier.price * quantity;
+  const fee = Math.round(subtotal * 0.1 * 100) / 100;
+  const total = subtotal + fee;
 
   return (
     <main className="checkout container fade-up">
@@ -156,95 +196,18 @@ export default function Checkout() {
           </div>
 
           <h2 className="checkout-section-title">💳 Pagamento</h2>
-          <div className="checkout-tabs" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={paymentMethod === 'pix'}
-              className={`checkout-tab ${paymentMethod === 'pix' ? 'active' : ''}`}
-              onClick={() => setPaymentMethod('pix')}
-            >
-              ⚡ PIX
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={paymentMethod === 'cartao'}
-              className={`checkout-tab ${paymentMethod === 'cartao' ? 'active' : ''}`}
-              onClick={() => setPaymentMethod('cartao')}
-            >
-              💳 Cartão
-            </button>
-          </div>
-
-          {paymentMethod === 'pix' ? (
-            <div className="checkout-pix">
-              <div className="checkout-qr" aria-hidden="true">
-                <span>◼️◻️◼️</span>
-                <span>◻️🔳◻️</span>
-                <span>◼️◻️◼️</span>
-              </div>
-              <p className="checkout-pix-hint">
-                Pague com PIX para aprovação instantânea. Escaneie o QR code ou use a chave
-                aleatória:
+          <div className="checkout-mp">
+            <span className="checkout-mp-logo" aria-hidden="true">
+              💳
+            </span>
+            <div className="checkout-mp-info">
+              <strong>Pagamento processado pelo Mercado Pago</strong>
+              <p className="muted">
+                Pix, cartão de crédito ou boleto — você escolhe na próxima tela, em ambiente
+                seguro. Nenhum dado de pagamento passa pelos nossos servidores.
               </p>
-              <code className="checkout-pix-key">{pixKey}</code>
             </div>
-          ) : (
-            <div className="checkout-card-fields">
-              <div className="field">
-                <label htmlFor="ck-card-number">Número do cartão</label>
-                <input
-                  id="ck-card-number"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="0000 0000 0000 0000"
-                  value={card.number}
-                  onChange={(e) => updateCard('number', maskCardNumber(e.target.value))}
-                  autoComplete="cc-number"
-                />
-              </div>
-              <div className="field-row">
-                <div className="field">
-                  <label htmlFor="ck-card-expiry">Validade</label>
-                  <input
-                    id="ck-card-expiry"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="MM/AA"
-                    value={card.expiry}
-                    onChange={(e) => updateCard('expiry', maskExpiry(e.target.value))}
-                    autoComplete="cc-exp"
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor="ck-card-cvv">CVV</label>
-                  <input
-                    id="ck-card-cvv"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="123"
-                    value={card.cvv}
-                    onChange={(e) =>
-                      updateCard('cvv', e.target.value.replace(/\D/g, '').slice(0, 4))
-                    }
-                    autoComplete="cc-csc"
-                  />
-                </div>
-              </div>
-              <div className="field">
-                <label htmlFor="ck-card-holder">Nome no cartão</label>
-                <input
-                  id="ck-card-holder"
-                  type="text"
-                  placeholder="Como impresso no cartão"
-                  value={card.holder}
-                  onChange={(e) => updateCard('holder', e.target.value)}
-                  autoComplete="cc-name"
-                />
-              </div>
-            </div>
-          )}
+          </div>
 
           {error && (
             <p className="checkout-error" role="alert">
@@ -252,15 +215,36 @@ export default function Checkout() {
             </p>
           )}
 
-          <button
-            type="submit"
-            className="btn btn-primary btn-block btn-lg"
-            disabled={loading}
-          >
-            {loading ? '⏳ Processando pagamento…' : `Confirmar pagamento · ${formatBRL(total)}`}
-          </button>
+          {pendingOrder ? (
+            <div className="checkout-demo" role="status">
+              <p>
+                <strong>⚠️ Mercado Pago não configurado — modo demonstração</strong>
+              </p>
+              <p className="muted">
+                Pedido <strong>{pendingOrder.id}</strong> criado. Em produção você seria
+                redirecionado ao checkout do Mercado Pago; aqui você pode simular a aprovação do
+                pagamento.
+              </p>
+              <button
+                type="button"
+                className="btn btn-success btn-block"
+                onClick={handleDemoConfirm}
+                disabled={confirming}
+              >
+                {confirming ? '⏳ Confirmando…' : '✅ Simular pagamento aprovado'}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="submit"
+              className="btn btn-primary btn-block btn-lg"
+              disabled={loading}
+            >
+              {loading ? '⏳ Criando pedido…' : `Ir para o pagamento · ${formatBRL(total)}`}
+            </button>
+          )}
           <p className="checkout-secure-note muted">
-            🔒 Seus dados são criptografados e nunca são compartilhados.
+            🔒 Pagamento com segurança pelo Mercado Pago.
           </p>
         </form>
 

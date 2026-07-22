@@ -55,77 +55,45 @@
   margin-top: 28px;
 }
 
-/* abas de pagamento */
-.checkout-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+/* pagamento externo (Mercado Pago) */
+.checkout-mp {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
   margin-bottom: 22px;
 }
 
-.checkout-tab {
-  padding: 13px 16px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--bg-soft);
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  font-weight: 700;
-  transition: border-color 0.2s, background 0.2s, color 0.2s, box-shadow 0.2s;
+.checkout-mp-logo {
+  font-size: 1.8rem;
+  line-height: 1.2;
 }
 
-.checkout-tab:hover {
-  border-color: var(--border-strong);
-  color: var(--text);
+.checkout-mp-info strong {
+  display: block;
+  margin-bottom: 6px;
 }
 
-.checkout-tab.active {
-  border-color: rgba(139, 92, 246, 0.6);
-  background: var(--gradient-soft);
-  color: var(--text);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
-}
-
-/* PIX */
-.checkout-pix {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  text-align: center;
-  padding: 8px 0 4px;
-}
-
-.checkout-qr {
-  width: 168px;
-  height: 168px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  font-size: 2.1rem;
-  background: #fff;
-  border-radius: var(--radius);
-  border: 6px solid #fff;
-  box-shadow: var(--shadow);
-  animation: pulseGlow 2.4s ease-in-out infinite;
-}
-
-.checkout-pix-hint {
+.checkout-mp-info p {
   font-size: 0.88rem;
-  color: var(--text-muted);
-  max-width: 380px;
 }
 
-.checkout-pix-key {
-  font-size: 0.8rem;
-  word-break: break-all;
-  background: var(--bg-soft);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: 10px 14px;
-  color: var(--text-muted);
+/* modo demonstração (MP não configurado / dev local) */
+.checkout-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+
+.checkout-demo p {
+  font-size: 0.9rem;
 }
 
 /* erro inline */

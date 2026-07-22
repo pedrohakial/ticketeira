@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getEvents } from '../data/store';
 import EventCard from '../components/EventCard';
@@ -7,8 +7,20 @@ import './Home.css';
 export default function Home() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('Todas');
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const events = useMemo(() => getEvents(), []);
+  useEffect(() => {
+    let active = true;
+    getEvents()
+      .then((data) => active && setEvents(data))
+      .catch((err) => active && setError(err.message || 'Não foi possível carregar os eventos.'))
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const categories = useMemo(
     () => ['Todas', ...new Set(events.map((e) => e.category))],
@@ -67,7 +79,26 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ---------- filtros ---------- */}
+      {loading ? (
+        <div className="container page-state">
+          <span className="spinner" aria-hidden="true" />
+          <p className="muted">Carregando eventos…</p>
+        </div>
+      ) : error ? (
+        <div className="container page-state">
+          <span className="home-empty-emoji" aria-hidden="true">
+            😵
+          </span>
+          <p className="page-state-error" role="alert">
+            ⚠️ {error}
+          </p>
+          <button type="button" className="btn btn-ghost" onClick={() => window.location.reload()}>
+            Tentar novamente
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* ---------- filtros ---------- */}
       <section className="container fade-up" id="eventos">
         <div className="home-pills" role="group" aria-label="Filtrar por categoria">
           {categories.map((cat) => (
@@ -130,6 +161,8 @@ export default function Home() {
           </div>
         )}
       </section>
+        </>
+      )}
 
       {/* ---------- footer ---------- */}
       <footer className="home-footer">

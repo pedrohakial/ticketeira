@@ -1,244 +1,237 @@
 // Camada de dados da Ticketeira.
-// MVP front-end: eventos e pedidos persistem em localStorage,
-// com seed de eventos de demonstração na primeira carga.
+// Eventos, lotes, pedidos e tickets vivem no Supabase (Postgres).
+// Pedidos/tickets são escritos apenas via RPCs security definer;
+// o localStorage só guarda os ids dos pedidos feitos neste navegador
+// (para a página "Meus ingressos").
+import { getSupabase } from '../lib/supabase';
 
-const EVENTS_KEY = 'ticketeira:events';
-const ORDERS_KEY = 'ticketeira:orders';
+const MY_ORDERS_KEY = 'ticketeira:myOrders';
 
-const seedEvents = [
-  {
-    id: 'evt-aurora',
-    title: 'Aurora Synthwave Live',
-    category: 'Eletrônica',
-    emoji: '🎛️',
-    gradient: 'linear-gradient(135deg,#8b5cf6,#ec4899)',
-    date: '2026-08-14T22:00:00',
-    venue: 'Audio Club',
-    city: 'São Paulo, SP',
-    organizer: 'Neon Nights Produções',
-    description:
-      'Uma noite imersiva de synthwave com projeções 360°, lasers e os maiores nomes da cena retrô-futurista. Traga seus óculos neon.',
-    tiers: [
-      { id: 'pista', name: 'Pista', price: 120, total: 500, sold: 312 },
-      { id: 'vip', name: 'VIP (open bar)', price: 320, total: 120, sold: 74 },
-      { id: 'camarote', name: 'Camarote', price: 580, total: 40, sold: 21 },
-    ],
-    featured: true,
-    rating: 4.8,
-    reviews: 231,
-    createdAt: '2026-06-01T12:00:00',
-  },
-  {
-    id: 'evt-maré',
-    title: 'Maré Alta — Festival de Verão',
-    category: 'Festival',
-    emoji: '🌊',
-    gradient: 'linear-gradient(135deg,#06b6d4,#3b82f6)',
-    date: '2026-08-29T16:00:00',
-    venue: 'Praia do Forte',
-    city: 'Salvador, BA',
-    organizer: 'Onda Certa Eventos',
-    description:
-      'Três palcos à beira-mar com axé, pop e eletrônica. Pôr do sol, food trucks e after party inclusos no ingresso.',
-    tiers: [
-      { id: 'meia', name: 'Meia-entrada', price: 90, total: 800, sold: 401 },
-      { id: 'inteira', name: 'Inteira', price: 180, total: 800, sold: 366 },
-      { id: 'passaporte', name: 'Passaporte 2 dias', price: 300, total: 200, sold: 88 },
-    ],
-    featured: true,
-    rating: 4.6,
-    reviews: 512,
-    createdAt: '2026-05-20T12:00:00',
-  },
-  {
-    id: 'evt-veludo',
-    title: 'Veludo — Noite de Jazz & Soul',
-    category: 'Jazz',
-    emoji: '🎷',
-    gradient: 'linear-gradient(135deg,#f59e0b,#ef4444)',
-    date: '2026-09-05T20:30:00',
-    venue: 'Teatro Bourbon',
-    city: 'Curitiba, PR',
-    organizer: 'Casa Veludo',
-    description:
-      'Jantar + show em formato cabaré. Standards de jazz, soul brasileiro e uma seleção de vinhos premiada.',
-    tiers: [
-      { id: 'plateia', name: 'Plateia', price: 150, total: 220, sold: 130 },
-      { id: 'mesa', name: 'Mesa p/ 2 + jantar', price: 420, total: 60, sold: 33 },
-    ],
-    featured: false,
-    rating: 4.9,
-    reviews: 98,
-    createdAt: '2026-06-10T12:00:00',
-  },
-  {
-    id: 'evt-trovão',
-    title: 'Trovão Elétrico — Rock in Club',
-    category: 'Rock',
-    emoji: '⚡',
-    gradient: 'linear-gradient(135deg,#ef4444,#7f1d1d)',
-    date: '2026-08-08T21:00:00',
-    venue: 'Hangar 677',
-    city: 'Porto Alegre, RS',
-    organizer: 'Sul Pesado Prod.',
-    description:
-      'O retorno do Trovão Elétrico aos palcos depois de 5 anos. Repertório completo do álbum "Circuito" + clássicos.',
-    tiers: [
-      { id: 'pista', name: 'Pista', price: 95, total: 700, sold: 655 },
-      { id: 'front', name: 'Front stage', price: 190, total: 150, sold: 150 },
-    ],
-    featured: false,
-    rating: 4.7,
-    reviews: 187,
-    createdAt: '2026-04-15T12:00:00',
-  },
-  {
-    id: 'evt-luar',
-    title: 'Luar do Sertão — Acústico',
-    category: 'Sertanejo',
-    emoji: '🌙',
-    gradient: 'linear-gradient(135deg,#22c55e,#0d9488)',
-    date: '2026-09-19T19:00:00',
-    venue: 'Arena Sertaneja',
-    city: 'Goiânia, GO',
-    organizer: 'Violada Shows',
-    description:
-      'Modas de viola ao pôr do sol em formato acústico. Área kids, praça de alimentação e estacionamento incluso.',
-    tiers: [
-      { id: 'arquibancada', name: 'Arquibancada', price: 60, total: 1200, sold: 402 },
-      { id: 'pista', name: 'Pista', price: 110, total: 900, sold: 287 },
-      { id: 'camarote', name: 'Camarote família', price: 240, total: 80, sold: 19 },
-    ],
-    featured: false,
-    rating: 4.5,
-    reviews: 143,
-    createdAt: '2026-06-18T12:00:00',
-  },
-  {
-    id: 'evt-pixel',
-    title: 'Pixel Beats — Games & Chiptune',
-    category: 'Eletrônica',
-    emoji: '👾',
-    gradient: 'linear-gradient(135deg,#3b82f6,#8b5cf6)',
-    date: '2026-10-03T18:00:00',
-    venue: 'Centro de Convenções',
-    city: 'Belo Horizonte, MG',
-    organizer: '8-Bit Collective',
-    description:
-      'Festival de chiptune com freeplay de fliperamas, campeonato de retrogames e DJs tocando trilhas de videogame ao vivo.',
-    tiers: [
-      { id: 'gamer', name: 'Gamer', price: 75, total: 600, sold: 210 },
-      { id: 'pro', name: 'Pro (campeonato)', price: 140, total: 128, sold: 64 },
-    ],
-    featured: false,
-    rating: 4.4,
-    reviews: 76,
-    createdAt: '2026-06-25T12:00:00',
-  },
-];
+// ---------- mapeadores (linha do banco -> shape usado nas páginas) ----------
 
-function read(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
+function mapTier(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    price: Number(row.price),
+    total: row.total,
+    sold: row.sold,
+  };
 }
 
-function write(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
+function mapEvent(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    category: row.category,
+    emoji: row.emoji,
+    gradient: row.gradient,
+    date: row.date,
+    venue: row.venue,
+    city: row.city,
+    organizer: row.organizer,
+    description: row.description,
+    featured: row.featured,
+    rating: row.rating != null ? Number(row.rating) : null,
+    reviews: row.reviews,
+    tiers: (row.ticket_tiers || [])
+      .slice()
+      .sort((a, b) => a.position - b.position)
+      .map(mapTier),
+  };
 }
 
-export function getEvents() {
-  let events = read(EVENTS_KEY, null);
-  if (!events) {
-    events = seedEvents;
-    write(EVENTS_KEY, events);
-  }
-  return events;
+function mapOrder(row, extras = {}) {
+  return {
+    id: row.id,
+    eventId: row.event_id,
+    tierId: row.tier_id,
+    quantity: row.quantity,
+    unitPrice: Number(row.unit_price),
+    subtotal: Number(row.subtotal),
+    fee: Number(row.fee),
+    total: Number(row.total),
+    buyer: { name: row.buyer_name, email: row.buyer_email, cpf: row.buyer_cpf },
+    paymentMethod: row.payment_method,
+    status: row.status,
+    createdAt: row.created_at,
+    tickets: [],
+    ...extras,
+  };
 }
 
-export function getEvent(id) {
-  return getEvents().find((e) => e.id === id) || null;
+function throwSb(error, fallback) {
+  throw new Error(error?.message || fallback);
 }
 
-export function createEvent(data) {
-  const events = getEvents();
-  const event = {
-    id: `evt-${Date.now().toString(36)}`,
+// ---------- eventos ----------
+
+export async function getEvents() {
+  const { data, error } = await getSupabase()
+    .from('events')
+    .select('*, ticket_tiers(*)')
+    .order('date', { ascending: true });
+  if (error) throwSb(error, 'Não foi possível carregar os eventos.');
+  return data.map(mapEvent);
+}
+
+export async function getEvent(id) {
+  const { data, error } = await getSupabase()
+    .from('events')
+    .select('*, ticket_tiers(*)')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throwSb(error, 'Não foi possível carregar o evento.');
+  return data ? mapEvent(data) : null;
+}
+
+export async function createEvent(data) {
+  const id = `evt-${Date.now().toString(36)}`;
+  const eventRow = {
+    id,
+    title: data.title,
+    category: data.category,
     emoji: data.emoji || '🎫',
     gradient: data.gradient || 'linear-gradient(135deg,#8b5cf6,#ec4899)',
+    date: new Date(data.date).toISOString(),
+    venue: data.venue,
+    city: data.city,
+    organizer: data.organizer,
+    description: data.description,
+    featured: false,
     rating: null,
     reviews: 0,
-    featured: false,
-    createdAt: new Date().toISOString(),
-    ...data,
-    tiers: data.tiers.map((t, i) => ({
-      id: `tier-${i}`,
-      name: t.name,
-      price: Number(t.price),
-      total: Number(t.total),
-      sold: 0,
-    })),
   };
-  events.push(event);
-  write(EVENTS_KEY, events);
-  return event;
+  const { error } = await getSupabase().from('events').insert(eventRow);
+  if (error) throwSb(error, 'Não foi possível criar o evento.');
+
+  const tierRows = data.tiers.map((t, i) => ({
+    id: `${id}:tier-${i}`,
+    event_id: id,
+    name: t.name,
+    price: Number(t.price),
+    total: Number(t.total),
+    sold: 0,
+    position: i,
+  }));
+  const { error: tiersError } = await getSupabase().from('ticket_tiers').insert(tierRows);
+  if (tiersError) throwSb(tiersError, 'Não foi possível criar os lotes do evento.');
+
+  return mapEvent({ ...eventRow, ticket_tiers: tierRows });
 }
 
-export function getOrders() {
-  return read(ORDERS_KEY, []);
+// ---------- pedidos ----------
+
+// Lembra localmente os pedidos feitos neste navegador (Meus ingressos).
+function rememberOrder(orderId) {
+  try {
+    const ids = JSON.parse(localStorage.getItem(MY_ORDERS_KEY) || '[]');
+    if (!ids.includes(orderId)) ids.push(orderId);
+    localStorage.setItem(MY_ORDERS_KEY, JSON.stringify(ids));
+  } catch {
+    // storage indisponível — a página Meus ingressos simplesmente ficará vazia
+  }
 }
 
-export function getOrder(id) {
-  return getOrders().find((o) => o.id === id) || null;
+function readMyOrderIds() {
+  try {
+    const ids = JSON.parse(localStorage.getItem(MY_ORDERS_KEY) || '[]');
+    return Array.isArray(ids) ? ids : [];
+  } catch {
+    return [];
+  }
 }
 
-// Efetiva a compra: baixa estoque do lote e registra o pedido.
-export function purchaseTickets({ eventId, tierId, quantity, buyer, paymentMethod }) {
-  const events = getEvents();
-  const event = events.find((e) => e.id === eventId);
-  if (!event) throw new Error('Evento não encontrado');
-  const tier = event.tiers.find((t) => t.id === tierId);
-  if (!tier) throw new Error('Tipo de ingresso não encontrado');
-  const remaining = tier.total - tier.sold;
-  if (quantity > remaining) throw new Error('Ingressos esgotados para este lote');
-
-  tier.sold += quantity;
-  write(EVENTS_KEY, events);
-
-  const fee = Math.round(tier.price * quantity * 0.1 * 100) / 100;
-  const order = {
-    id: `TKT-${Date.now().toString(36).toUpperCase()}`,
-    eventId,
-    eventTitle: event.title,
-    tierId,
-    tierName: tier.name,
-    unitPrice: tier.price,
-    quantity,
-    subtotal: tier.price * quantity,
-    fee,
-    total: tier.price * quantity + fee,
-    buyer,
-    paymentMethod,
-    status: 'confirmado',
-    createdAt: new Date().toISOString(),
-    tickets: Array.from({ length: quantity }, (_, i) => ({
-      code: `${eventId.slice(4, 8).toUpperCase()}-${tierId.toUpperCase()}-${String(
-        tier.sold - quantity + i + 1,
-      ).padStart(4, '0')}`,
-    })),
-  };
-  const orders = getOrders();
-  orders.push(order);
-  write(ORDERS_KEY, orders);
+// Cria um pedido pendente (estoque é baixado só na confirmação do pagamento).
+export async function createOrder({ eventId, tierId, quantity, buyer, paymentMethod }) {
+  const { data, error } = await getSupabase().rpc('create_order', {
+    p_event_id: eventId,
+    p_tier_id: tierId,
+    p_quantity: quantity,
+    p_buyer_name: buyer.name,
+    p_buyer_email: buyer.email,
+    p_buyer_cpf: buyer.cpf,
+    p_payment_method: paymentMethod,
+  });
+  if (error) throwSb(error, 'Não foi possível criar o pedido.');
+  const order = mapOrder(data);
+  rememberOrder(order.id);
   return order;
 }
 
+// Confirmação manual do pedido — fallback de demonstração para quando o
+// Mercado Pago não está configurado (em produção quem confirma é o webhook).
+export async function confirmOrderDemo(orderId) {
+  const { data, error } = await getSupabase().rpc('confirm_order', { p_order_id: orderId });
+  if (error) throwSb(error, 'Não foi possível confirmar o pedido.');
+  return mapOrder(data);
+}
+
+// Busca dados de apresentação (título do evento, nome do lote) de vários pedidos.
+async function fetchOrderExtras(sb, rows) {
+  const orderIds = rows.map((r) => r.id);
+  const eventIds = [...new Set(rows.map((r) => r.event_id))];
+  const tierIds = [...new Set(rows.map((r) => r.tier_id))];
+
+  const [ticketsRes, eventsRes, tiersRes] = await Promise.all([
+    sb.from('tickets').select('order_id, code').in('order_id', orderIds),
+    sb.from('events').select('*, ticket_tiers(*)').in('id', eventIds),
+    sb.from('ticket_tiers').select('id, name').in('id', tierIds),
+  ]);
+  if (ticketsRes.error) throwSb(ticketsRes.error, 'Não foi possível carregar os ingressos.');
+  if (eventsRes.error) throwSb(eventsRes.error, 'Não foi possível carregar os eventos.');
+  if (tiersRes.error) throwSb(tiersRes.error, 'Não foi possível carregar os lotes.');
+
+  const eventsById = new Map(eventsRes.data.map((e) => [e.id, e]));
+  const tiersById = new Map(tiersRes.data.map((t) => [t.id, t]));
+  const ticketsByOrder = new Map();
+  for (const t of ticketsRes.data) {
+    if (!ticketsByOrder.has(t.order_id)) ticketsByOrder.set(t.order_id, []);
+    ticketsByOrder.get(t.order_id).push({ code: t.code });
+  }
+
+  return (row) => {
+    const eventRow = eventsById.get(row.event_id);
+    return {
+      tickets: ticketsByOrder.get(row.id) || [],
+      event: eventRow ? mapEvent(eventRow) : null,
+      eventTitle: eventRow?.title || 'Evento indisponível',
+      tierName: tiersById.get(row.tier_id)?.name || 'Ingresso',
+    };
+  };
+}
+
+export async function getOrder(id) {
+  const sb = getSupabase();
+  const { data: row, error } = await sb.from('orders').select('*').eq('id', id).maybeSingle();
+  if (error) throwSb(error, 'Não foi possível carregar o pedido.');
+  if (!row) return null;
+
+  const extrasFor = await fetchOrderExtras(sb, [row]);
+  return mapOrder(row, extrasFor(row));
+}
+
+// Pedidos feitos neste navegador, mais recente primeiro.
+export async function getMyOrders() {
+  const ids = readMyOrderIds();
+  if (ids.length === 0) return [];
+
+  const sb = getSupabase();
+  const { data: rows, error } = await sb
+    .from('orders')
+    .select('*')
+    .in('id', ids)
+    .order('created_at', { ascending: false });
+  if (error) throwSb(error, 'Não foi possível carregar seus pedidos.');
+  if (!rows.length) return [];
+
+  const extrasFor = await fetchOrderExtras(sb, rows);
+  return rows.map((row) => mapOrder(row, extrasFor(row)));
+}
+
 // Visão do organizador: eventos + receita estimada por evento.
-export function getOrganizerStats() {
-  const events = getEvents();
+export async function getOrganizerStats() {
+  const events = await getEvents();
   return events.map((e) => {
     const sold = e.tiers.reduce((acc, t) => acc + t.sold, 0);
     const capacity = e.tiers.reduce((acc, t) => acc + t.total, 0);
@@ -246,6 +239,8 @@ export function getOrganizerStats() {
     return { event: e, sold, capacity, revenue };
   });
 }
+
+// ---------- constantes e formatação (puros) ----------
 
 export const CATEGORIES = [
   'Eletrônica',

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getOrganizerStats, formatBRL, formatDate } from '../data/store';
 import { EventCover } from '../components/EventCard';
@@ -11,7 +12,44 @@ function occupancyClass(pct) {
 }
 
 export default function Dashboard() {
-  const stats = getOrganizerStats();
+  const [stats, setStats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    getOrganizerStats()
+      .then((data) => active && setStats(data))
+      .catch((err) =>
+        active && setError(err.message || 'Não foi possível carregar o painel.'),
+      )
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="container page-state">
+        <span className="spinner" aria-hidden="true" />
+        <p className="muted">Carregando painel…</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container page-state">
+        <p className="page-state-error" role="alert">
+          ⚠️ {error}
+        </p>
+        <button type="button" className="btn btn-ghost" onClick={() => window.location.reload()}>
+          Tentar novamente
+        </button>
+      </div>
+    );
+  }
 
   const totalEvents = stats.length;
   const totalSold = stats.reduce((acc, s) => acc + s.sold, 0);
